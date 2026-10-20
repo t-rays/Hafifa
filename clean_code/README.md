@@ -20,10 +20,12 @@ python clean_code/player.py
 
 **Dependencies:** `pygame`, `mutagen`
 
-| Component | Role |
-|-----------|------|
-| `Track` | Immutable song; ID3 read once when adding files |
-| `Playlist` | Track list + index; next/previous wrap around |
-| `MusicPlayer` | Tk UI, user actions, pygame mixer, end-of-song polling |
+| File | Role |
+|------|------|
+| `player.py` | Application entry point (`main`) |
+| `constants.py` | Shared UI styles, timing, and dialog settings |
+| `track.py` | `Track` — immutable song metadata |
+| `playlist.py` | `Playlist` — order, index, wrap on next/previous |
+| `music_player.py` | `MusicPlayer` — Tk UI and pygame actions |
 
 **Usage:** ADD TO LIST → pick MP3s → PLAY SONG. Pause and next/previous use the current playlist index.
