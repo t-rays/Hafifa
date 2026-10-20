@@ -4,17 +4,22 @@ from dataclasses import dataclass
 
 import pygame
 from mutagen import File, MutagenError
-from tkinter import END, WORD, Button, Frame, Label, Text, Tk
+from tkinter import END, WORD, Button, Label, Text, Tk
 from tkinter.filedialog import askopenfilenames
 
-UNKNOWN_ARTIST = "Unknown artist"
-SONG_END = pygame.USEREVENT + 1
+SONG_ENDED = pygame.USEREVENT + 1
 POLL_INTERVAL_MS = 200
+UNKNOWN_ARTIST = "Unknown artist"
 
-global playlist
-global pausing
-global text1
-global label1
+BUTTON_STYLE = {"bg": "AntiqueWhite1", "width": 40}
+NOW_PLAYING_STYLE = {
+    "fg": "Black",
+    "bg": "ivory2",
+    "font": ("Helvetica", 10, "bold italic"),
+}
+PLAYLIST_STYLE = {"wrap": WORD, "width": 60, "height": 12}
+
+MP3_FILE_TYPES = [("MP3 files", "*.mp3")]
 
 
 @dataclass(frozen=True)
@@ -25,6 +30,7 @@ class Track:
 
     @classmethod
     def from_path(cls, path: str) -> "Track":
+        """Read tags once; fall back to the filename if they are missing."""
         filename = os.path.basename(path)
         try:
             tagged = File(path, easy=True)
@@ -42,6 +48,8 @@ class Track:
 
 
 class Playlist:
+    """Ordered tracks with a current position that wraps at both ends."""
+
     def __init__(self) -> None:
         self.tracks: list[Track] = []
         self.index = 0
@@ -56,104 +64,98 @@ class Playlist:
         self.tracks.extend(tracks)
 
     def advance(self) -> None:
-        if self.tracks:
-            self.index = (self.index + 1) % len(self.tracks)
+        self._move(+1)
 
     def rewind(self) -> None:
+        self._move(-1)
+
+    def _move(self, offset: int) -> None:
         if self.tracks:
-            self.index = (self.index - 1) % len(self.tracks)
+            self.index = (self.index + offset) % len(self.tracks)
 
 
-class FrameApp(Frame):
-    def __init__(self, master):
-        super().__init__(master)
-        global text1, label1, playlist, pausing
-        self.grid()
-        Button(self, text="ADD TO LIST", command=button1, bg="AntiqueWhite1", width=40).grid(
-            row=1, column=0
+class MusicPlayer(Tk):
+    def __init__(self) -> None:
+        super().__init__()
+        self.title("MP3 Music Player")
+        self.geometry("500x500")
+        self.resizable(False, False)
+
+        self.playlist = Playlist()
+        self.paused = False
+
+        self._build_widgets()
+        self.after(POLL_INTERVAL_MS, self._poll_song_end)
+
+    def _build_widgets(self) -> None:
+        controls = (
+            ("ADD TO LIST", self.add_songs),
+            ("PLAY SONG", self.play_current),
+            ("PAUSE/UNPAUSE", self.toggle_pause),
+            ("PREVIOUS SONG", self.play_previous),
+            ("NEXT SONG", self.play_next),
         )
-        Button(self, text="PLAY SONG", command=button2, bg="AntiqueWhite1", width=40).grid(
-            row=2, column=0
-        )
-        Button(self, text="PAUSE/UNPAUSE", command=button3, bg="AntiqueWhite1", width=40).grid(
-            row=3, column=0
-        )
-        Button(self, text="PREVIOUS SONG", command=button4, bg="AntiqueWhite1", width=40).grid(
-            row=4, column=0
-        )
-        Button(self, text="NEXT SONG", command=button5, bg="AntiqueWhite1", width=40).grid(
-            row=5, column=0
-        )
-        label1 = Label(self, fg="Black", font=("Helvetica 12 bold italic", 10), bg="ivory2")
-        label1.grid(row=6, column=0)
-        text1 = Text(self, wrap=WORD, width=60)
-        text1.grid(row=8, column=0)
-        playlist = Playlist()
-        pausing = False
+        for label, command in controls:
+            Button(self, text=label, command=command, **BUTTON_STYLE).pack()
 
+        self.now_playing = Label(self, **NOW_PLAYING_STYLE)
+        self.now_playing.pack()
 
-def button1():
-    global playlist, text1
-    paths = askopenfilenames()
-    if not paths:
-        return
-    playlist.add(Track.from_path(path) for path in paths)
-    text1.delete(0.0, END)
-    for number, track in enumerate(playlist.tracks, start=1):
-        text1.insert(END, f"{number} : {track.label}\n")
+        self.playlist_view = Text(self, **PLAYLIST_STYLE)
+        self.playlist_view.pack()
 
+    def add_songs(self) -> None:
+        paths = askopenfilenames(filetypes=MP3_FILE_TYPES)
+        if not paths:
+            return
+        self.playlist.add(Track.from_path(path) for path in paths)
+        self._show_playlist()
 
-def button2():
-    global playlist, pausing, label1, SONG_END
-    track = playlist.current
-    if track is None:
-        return
-    pygame.mixer.music.load(track.path)
-    pygame.mixer.music.play(1, 0.0)
-    pygame.mixer.music.set_endevent(SONG_END)
-    pausing = False
-    label1["text"] = f"Now playing: Nr:{playlist.index + 1} {track.label}"
+    def play_current(self) -> None:
+        track = self.playlist.current
+        if track is None:
+            return
+        try:
+            pygame.mixer.music.load(track.path)
+        except pygame.error:
+            self.now_playing["text"] = f"Cannot play: {track.title}"
+            return
+        pygame.mixer.music.play()
+        self.paused = False
+        number = self.playlist.index + 1
+        self.now_playing["text"] = f"Now playing: Nr:{number} {track.label}"
 
+    def toggle_pause(self) -> None:
+        if self.paused:
+            pygame.mixer.music.unpause()
+        else:
+            pygame.mixer.music.pause()
+        self.paused = not self.paused
 
-def check_music():
-    for event in pygame.event.get():
-        if event.type == SONG_END:
-            button5()
+    def play_next(self) -> None:
+        self.playlist.advance()
+        self.play_current()
 
+    def play_previous(self) -> None:
+        self.playlist.rewind()
+        self.play_current()
 
-def button3():
-    global pausing
-    if pausing:
-        pygame.mixer.music.unpause()
-    else:
-        pygame.mixer.music.pause()
-    pausing = not pausing
+    def _show_playlist(self) -> None:
+        self.playlist_view.delete("1.0", END)
+        for number, track in enumerate(self.playlist.tracks, start=1):
+            self.playlist_view.insert(END, f"{number} : {track.label}\n")
 
-
-def button5():
-    global playlist
-    playlist.advance()
-    button2()
-
-
-def button4():
-    global playlist
-    playlist.rewind()
-    button2()
+    def _poll_song_end(self) -> None:
+        if any(event.type == SONG_ENDED for event in pygame.event.get()):
+            self.play_next()
+        self.after(POLL_INTERVAL_MS, self._poll_song_end)
 
 
 def main() -> None:
-    window = Tk()
-    window.geometry("500x500")
-    window.title("MP3 Music Player")
+    app = MusicPlayer()
     pygame.init()
-    app = FrameApp(window)
-
-    def poll_song_end() -> None:
-        check_music()
-        app.after(POLL_INTERVAL_MS, poll_song_end)
-
-    poll_song_end()
+    pygame.mixer.init()
+    pygame.mixer.music.set_endevent(SONG_ENDED)
     app.mainloop()
 
 
