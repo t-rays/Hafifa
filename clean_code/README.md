@@ -9,3 +9,21 @@ To help you, you have a git repo that sums up the principles of Python Clean Cod
 You should choose both linter and formater of your choise, run it on the code and present it in the CR.
 
 Good luck!
+
+## Player (`player.py`)
+
+**Run** (from repo root, with venv activated):
+
+```bash
+python clean_code/player.py
+```
+
+**Dependencies:** `pygame`, `mutagen`
+
+| Component | Role |
+|-----------|------|
+| `Track` | Immutable song; ID3 read once when adding files |
+| `Playlist` | Track list + index; next/previous wrap around |
+| `MusicPlayer` | Tk UI, user actions, pygame mixer, end-of-song polling |
+
+**Usage:** ADD TO LIST → pick MP3s → PLAY SONG. Pause and next/previous use the current playlist index.

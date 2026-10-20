@@ -1,3 +1,12 @@
+"""Tkinter MP3 player: Track metadata, Playlist navigation, pygame playback.
+
+Run: ``python clean_code/player.py`` (requires pygame, mutagen).
+
+Layers:
+  Track     — path + title/artist (tags read once in ``from_path``)
+  Playlist  — ordered list, current index, wrap on next/previous
+  MusicPlayer — UI and pygame; polls for end-of-track via ``after()``
+"""
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -24,6 +33,8 @@ MP3_FILE_TYPES = [("MP3 files", "*.mp3")]
 
 @dataclass(frozen=True)
 class Track:
+    """One audio file and its display metadata."""
+
     path: str
     title: str
     artist: str
@@ -75,6 +86,8 @@ class Playlist:
 
 
 class MusicPlayer(Tk):
+    """Main window: file picker, controls, playlist view, and mixer actions."""
+
     def __init__(self) -> None:
         super().__init__()
         self.title("MP3 Music Player")
@@ -152,6 +165,7 @@ class MusicPlayer(Tk):
 
 
 def main() -> None:
+    """Create the Tk window first, then init pygame (macOS-friendly order)."""
     app = MusicPlayer()
     pygame.init()
     pygame.mixer.init()
