@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pygame
@@ -10,9 +11,8 @@ UNKNOWN_ARTIST = "Unknown artist"
 SONG_END = pygame.USEREVENT + 1
 POLL_INTERVAL_MS = 200
 
-global playlist_tracks
+global playlist
 global pausing
-global list_index
 global text1
 global label1
 
@@ -41,10 +41,33 @@ class Track:
         return f"{self.title} - {self.artist}"
 
 
+class Playlist:
+    def __init__(self) -> None:
+        self.tracks: list[Track] = []
+        self.index = 0
+
+    @property
+    def current(self) -> Track | None:
+        if not self.tracks:
+            return None
+        return self.tracks[self.index]
+
+    def add(self, tracks: Iterable[Track]) -> None:
+        self.tracks.extend(tracks)
+
+    def advance(self) -> None:
+        if self.tracks:
+            self.index = (self.index + 1) % len(self.tracks)
+
+    def rewind(self) -> None:
+        if self.tracks:
+            self.index = (self.index - 1) % len(self.tracks)
+
+
 class FrameApp(Frame):
     def __init__(self, master):
         super().__init__(master)
-        global text1, label1, playlist_tracks, pausing, list_index
+        global text1, label1, playlist, pausing
         self.grid()
         Button(self, text="ADD TO LIST", command=button1, bg="AntiqueWhite1", width=40).grid(
             row=1, column=0
@@ -65,36 +88,31 @@ class FrameApp(Frame):
         label1.grid(row=6, column=0)
         text1 = Text(self, wrap=WORD, width=60)
         text1.grid(row=8, column=0)
-        playlist_tracks = []
+        playlist = Playlist()
         pausing = False
-        list_index = 0
 
 
 def button1():
-    global list_index, playlist_tracks, pausing, label1, text1
+    global playlist, text1
     paths = askopenfilenames()
     if not paths:
         return
-    for path in paths:
-        playlist_tracks.append(Track.from_path(path))
+    playlist.add(Track.from_path(path) for path in paths)
     text1.delete(0.0, END)
-    for key, track in enumerate(playlist_tracks):
-        text1.insert(END, f"{key + 1} : {track.label}\n")
-
-
-def song_data():
-    track = playlist_tracks[list_index]
-    return f"Now playing: Nr:{list_index + 1} {track.label}"
+    for number, track in enumerate(playlist.tracks, start=1):
+        text1.insert(END, f"{number} : {track.label}\n")
 
 
 def button2():
-    global list_index, playlist_tracks, pausing, label1, text1
-    track = playlist_tracks[list_index]
+    global playlist, pausing, label1, SONG_END
+    track = playlist.current
+    if track is None:
+        return
     pygame.mixer.music.load(track.path)
     pygame.mixer.music.play(1, 0.0)
     pygame.mixer.music.set_endevent(SONG_END)
     pausing = False
-    label1["text"] = song_data()
+    label1["text"] = f"Now playing: Nr:{playlist.index + 1} {track.label}"
 
 
 def check_music():
@@ -112,27 +130,15 @@ def button3():
     pausing = not pausing
 
 
-def get_next_song():
-    if list_index + 2 <= len(playlist_tracks):
-        return list_index + 1
-    return 0
-
-
 def button5():
-    global list_index
-    list_index = get_next_song()
+    global playlist
+    playlist.advance()
     button2()
 
 
-def get_previous_song():
-    if list_index - 1 >= 0:
-        return list_index - 1
-    return len(playlist_tracks) - 1
-
-
 def button4():
-    global list_index
-    list_index = get_previous_song()
+    global playlist
+    playlist.rewind()
     button2()
 
 
