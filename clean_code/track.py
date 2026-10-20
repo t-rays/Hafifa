@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from mutagen import File, MutagenError
 
-from constants import UNKNOWN_ARTIST
+from constants import TAG_VALUE_INDEX, UNKNOWN_ARTIST
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class Track:
         if tagged is None:
             logger.debug("Using filename fallback for %s", path)
             return cls(path, filename, UNKNOWN_ARTIST)
-        title = (tagged.get("title") or [filename])[0]
-        artist = (tagged.get("artist") or [UNKNOWN_ARTIST])[0]
+        title = (tagged.get("title") or [filename])[TAG_VALUE_INDEX]
+        artist = (tagged.get("artist") or [UNKNOWN_ARTIST])[TAG_VALUE_INDEX]
         return cls(path, str(title), str(artist))
 
     @property

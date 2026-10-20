@@ -23,7 +23,7 @@ python clean_code/player.py
 | File | Role |
 |------|------|
 | `player.py` | Application entry point (`main`) |
-| `constants.py` | Shared UI styles, timing, and dialog settings |
+| `constants.py` | Shared UI styles, timing, numeric defaults, and dialog settings |
 | `track.py` | `Track` — immutable song metadata |
 | `playlist.py` | `Playlist` — order, index, wrap on next/previous |
 | `music_player.py` | `MusicPlayer` — Tk UI and pygame actions |

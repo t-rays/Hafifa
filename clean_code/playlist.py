@@ -2,6 +2,11 @@
 
 from collections.abc import Iterable
 
+from constants import (
+    INITIAL_PLAYLIST_INDEX,
+    PLAYLIST_STEP_BACKWARD,
+    PLAYLIST_STEP_FORWARD,
+)
 from track import Track
 
 
@@ -10,7 +15,7 @@ class Playlist:
 
     def __init__(self) -> None:
         self.tracks: list[Track] = []
-        self.index = 0
+        self.index = INITIAL_PLAYLIST_INDEX
 
     @property
     def current(self) -> Track | None:
@@ -22,10 +27,10 @@ class Playlist:
         self.tracks.extend(tracks)
 
     def advance(self) -> None:
-        self._move(+1)
+        self._move(PLAYLIST_STEP_FORWARD)
 
     def rewind(self) -> None:
-        self._move(-1)
+        self._move(PLAYLIST_STEP_BACKWARD)
 
     def _move(self, offset: int) -> None:
         if self.tracks:

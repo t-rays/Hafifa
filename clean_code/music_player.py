@@ -8,12 +8,15 @@ from tkinter.filedialog import askopenfilenames
 
 from constants import (
     BUTTON_STYLE,
+    FIRST_TRACK_NUMBER,
     MP3_FILE_TYPES,
     NOW_PLAYING_STYLE,
     PLAYLIST_STYLE,
+    PLAYLIST_TEXT_START,
     POLL_INTERVAL_MS,
     SONG_ENDED,
     WINDOW_GEOMETRY,
+    WINDOW_RESIZABLE,
     WINDOW_TITLE,
 )
 from playlist import Playlist
@@ -29,7 +32,7 @@ class MusicPlayer(Tk):
         super().__init__()
         self.title(WINDOW_TITLE)
         self.geometry(WINDOW_GEOMETRY)
-        self.resizable(False, False)
+        self.resizable(WINDOW_RESIZABLE, WINDOW_RESIZABLE)
 
         self.playlist = Playlist()
         self.paused = False
@@ -75,8 +78,8 @@ class MusicPlayer(Tk):
             return
         pygame.mixer.music.play()
         self.paused = False
-        number = self.playlist.index + 1
-        self.now_playing["text"] = f"Now playing: Nr:{number} {track.label}"
+        track_number = self.playlist.index + FIRST_TRACK_NUMBER
+        self.now_playing["text"] = f"Now playing: Nr:{track_number} {track.label}"
 
     def toggle_pause(self) -> None:
         try:
@@ -98,8 +101,10 @@ class MusicPlayer(Tk):
         self.play_current()
 
     def _show_playlist(self) -> None:
-        self.playlist_view.delete("1.0", END)
-        for number, track in enumerate(self.playlist.tracks, start=1):
+        self.playlist_view.delete(PLAYLIST_TEXT_START, END)
+        for number, track in enumerate(
+            self.playlist.tracks, start=FIRST_TRACK_NUMBER
+        ):
             self.playlist_view.insert(END, f"{number} : {track.label}\n")
 
     def _poll_song_end(self) -> None:
