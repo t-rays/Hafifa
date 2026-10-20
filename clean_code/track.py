@@ -21,7 +21,15 @@ class Track:
 
     @classmethod
     def from_path(cls, path: str) -> "Track":
-        """Read tags once; fall back to the filename if they are missing."""
+        """Build a track from a file path, reading ID3 tags a single time.
+
+        Args:
+            path: Absolute or relative path to an audio file on disk.
+
+        Returns:
+            A ``Track`` with title/artist from tags, or filename / unknown artist
+            when tags are missing or unreadable.
+        """
         filename = os.path.basename(path)
         try:
             tagged = File(path, easy=True)
@@ -37,4 +45,5 @@ class Track:
 
     @property
     def label(self) -> str:
+        """Human-readable ``title - artist`` string for UI and logs."""
         return f"{self.title} - {self.artist}"

@@ -1,4 +1,8 @@
-"""Tkinter UI and pygame playback."""
+"""Tkinter UI and pygame playback.
+
+``MusicPlayer`` binds user actions to ``Playlist`` state and the pygame mixer.
+End-of-track handling uses Tk's ``after`` scheduler rather than a busy loop.
+"""
 
 import logging
 
@@ -29,6 +33,7 @@ class MusicPlayer(Tk):
     """Main window: file picker, controls, playlist view, and mixer actions."""
 
     def __init__(self) -> None:
+        """Lay out controls and start periodic checks for track end events."""
         super().__init__()
         self.title(WINDOW_TITLE)
         self.geometry(WINDOW_GEOMETRY)
@@ -58,6 +63,11 @@ class MusicPlayer(Tk):
         self.playlist_view.pack()
 
     def add_songs(self) -> None:
+        """Open a file dialog, append chosen MP3s, and refresh the playlist view.
+
+        Each path is turned into a ``Track`` (tags read once). Does nothing if
+        the user cancels the dialog.
+        """
         paths = askopenfilenames(filetypes=MP3_FILE_TYPES)
         if not paths:
             return
@@ -66,6 +76,11 @@ class MusicPlayer(Tk):
         self._show_playlist()
 
     def play_current(self) -> None:
+        """Load and play the track at the playlist's current index.
+
+        Updates the now-playing label on success. On failure, logs a warning
+        and shows a short error message without changing the playlist index.
+        """
         track = self.playlist.current
         if track is None:
             logger.warning("Play requested but the playlist is empty")
@@ -82,6 +97,7 @@ class MusicPlayer(Tk):
         self.now_playing["text"] = f"Now playing: Nr:{track_number} {track.label}"
 
     def toggle_pause(self) -> None:
+        """Pause or resume the current mixer stream, if one is active."""
         try:
             if self.paused:
                 pygame.mixer.music.unpause()
@@ -93,14 +109,17 @@ class MusicPlayer(Tk):
         self.paused = not self.paused
 
     def play_next(self) -> None:
+        """Move to the next track (wrapping) and start playback."""
         self.playlist.advance()
         self.play_current()
 
     def play_previous(self) -> None:
+        """Move to the previous track (wrapping) and start playback."""
         self.playlist.rewind()
         self.play_current()
 
     def _show_playlist(self) -> None:
+        """Rewrite the text widget from the in-memory playlist (1-based lines)."""
         self.playlist_view.delete(PLAYLIST_TEXT_START, END)
         for number, track in enumerate(
             self.playlist.tracks, start=FIRST_TRACK_NUMBER
@@ -108,6 +127,7 @@ class MusicPlayer(Tk):
             self.playlist_view.insert(END, f"{number} : {track.label}\n")
 
     def _poll_song_end(self) -> None:
+        """Check pygame for end-of-song events and schedule the next poll."""
         if any(event.type == SONG_ENDED for event in pygame.event.get()):
             self.play_next()
         self.after(POLL_INTERVAL_MS, self._poll_song_end)

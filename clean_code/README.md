@@ -31,4 +31,6 @@ python clean_code/player.py
 
 Warnings and errors (bad tags, failed playback, empty playlist) are logged to the terminal as well as shown in the UI where applicable.
 
+Public classes and important methods include docstrings (especially ``Track.from_path``, ``Playlist`` navigation, ``MusicPlayer`` playback actions, and ``main``).
+
 **Usage:** ADD TO LIST → pick MP3s → PLAY SONG. Pause and next/previous use the current playlist index.

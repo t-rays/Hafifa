@@ -1,4 +1,8 @@
-"""Shared configuration and UI defaults for the MP3 player."""
+"""Shared configuration and UI defaults for the MP3 player.
+
+Numeric and string defaults live here so UI and domain code avoid magic
+values. Style dicts are built from these names for consistent widgets.
+"""
 
 import pygame
 from tkinter import WORD

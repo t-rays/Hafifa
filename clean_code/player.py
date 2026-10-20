@@ -22,7 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    """Create the Tk window first, then init pygame (macOS-friendly order)."""
+    """Start the player: logging, Tk window, pygame mixer, then event loop.
+
+    Pygame is initialized after ``MusicPlayer`` so Tk owns the GUI on macOS.
+    ``SONG_ENDED`` is registered so ``MusicPlayer`` can auto-advance tracks.
+    """
     configure_logging()
     logger.info("Starting MP3 player")
     app = MusicPlayer()
