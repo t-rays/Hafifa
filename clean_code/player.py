@@ -7,16 +7,24 @@ Modules:
   track         — ``Track`` metadata model
   playlist      — ``Playlist`` navigation
   music_player  — ``MusicPlayer`` Tk window and pygame actions
+  logging_config — console logging setup
 """
+
+import logging
 
 import pygame
 
 from constants import SONG_ENDED
+from logging_config import configure_logging
 from music_player import MusicPlayer
+
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
     """Create the Tk window first, then init pygame (macOS-friendly order)."""
+    configure_logging()
+    logger.info("Starting MP3 player")
     app = MusicPlayer()
     pygame.init()
     pygame.mixer.init()

@@ -1,5 +1,7 @@
 """Tkinter UI and pygame playback."""
 
+import logging
+
 import pygame
 from tkinter import END, Button, Label, Text, Tk
 from tkinter.filedialog import askopenfilenames
@@ -16,6 +18,8 @@ from constants import (
 )
 from playlist import Playlist
 from track import Track
+
+logger = logging.getLogger(__name__)
 
 
 class MusicPlayer(Tk):
@@ -55,15 +59,18 @@ class MusicPlayer(Tk):
         if not paths:
             return
         self.playlist.add(Track.from_path(path) for path in paths)
+        logger.info("Added %d track(s) to the playlist", len(paths))
         self._show_playlist()
 
     def play_current(self) -> None:
         track = self.playlist.current
         if track is None:
+            logger.warning("Play requested but the playlist is empty")
             return
         try:
             pygame.mixer.music.load(track.path)
-        except pygame.error:
+        except pygame.error as error:
+            logger.warning("Cannot play %s: %s", track.path, error)
             self.now_playing["text"] = f"Cannot play: {track.title}"
             return
         pygame.mixer.music.play()
@@ -72,10 +79,14 @@ class MusicPlayer(Tk):
         self.now_playing["text"] = f"Now playing: Nr:{number} {track.label}"
 
     def toggle_pause(self) -> None:
-        if self.paused:
-            pygame.mixer.music.unpause()
-        else:
-            pygame.mixer.music.pause()
+        try:
+            if self.paused:
+                pygame.mixer.music.unpause()
+            else:
+                pygame.mixer.music.pause()
+        except pygame.error as error:
+            logger.warning("Pause toggle failed: %s", error)
+            return
         self.paused = not self.paused
 
     def play_next(self) -> None:

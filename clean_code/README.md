@@ -27,5 +27,8 @@ python clean_code/player.py
 | `track.py` | `Track` — immutable song metadata |
 | `playlist.py` | `Playlist` — order, index, wrap on next/previous |
 | `music_player.py` | `MusicPlayer` — Tk UI and pygame actions |
+| `logging_config.py` | Console logging format and startup configuration |
+
+Warnings and errors (bad tags, failed playback, empty playlist) are logged to the terminal as well as shown in the UI where applicable.
 
 **Usage:** ADD TO LIST → pick MP3s → PLAY SONG. Pause and next/previous use the current playlist index.

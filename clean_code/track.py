@@ -1,11 +1,14 @@
 """Track metadata model."""
 
+import logging
 import os
 from dataclasses import dataclass
 
 from mutagen import File, MutagenError
 
 from constants import UNKNOWN_ARTIST
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -22,9 +25,11 @@ class Track:
         filename = os.path.basename(path)
         try:
             tagged = File(path, easy=True)
-        except MutagenError:
+        except MutagenError as error:
+            logger.warning("Could not read tags for %s: %s", path, error)
             tagged = None
         if tagged is None:
+            logger.debug("Using filename fallback for %s", path)
             return cls(path, filename, UNKNOWN_ARTIST)
         title = (tagged.get("title") or [filename])[0]
         artist = (tagged.get("artist") or [UNKNOWN_ARTIST])[0]
