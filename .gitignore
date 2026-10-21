@@ -1,0 +1,6 @@
+.venv/
+web_scraping/.venv/
+web_scraping/output/
+__pycache__/
+*.pyc
+.vscode/
