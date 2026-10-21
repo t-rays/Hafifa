@@ -26,3 +26,33 @@ In the `output` directory, you should have as many subdirectories as there are U
 - Use Chrome as the main browser.
 - It is recommended (but not mandatory for this exercise) to write tests.
 - Important: Ensure efficient runtime by considering asynchronous and parallel processing.
+
+## Implementation (this repo)
+
+| File | Role |
+|------|------|
+| `browser.py` | Entry point: read URLs, async Playwright scrape, write output |
+| `constants.py` | Paths, concurrency, timeouts, viewport, logging format |
+
+### Run
+
+From `web_scraping/` (with Playwright installed):
+
+```bash
+python browser.py
+```
+
+Install browser binaries once: `playwright install chromium`.
+
+For editor type checking, use the venv in this folder (`web_scraping/.venv`) as the Python interpreter; `pyrightconfig.json` here points Pyright/Pylance at that environment.
+
+### Output layout
+
+For each line in `input/urls.input`, the script creates `output/url_<n>/` with:
+
+- `screenshot.png` — first viewport screenshot after `load`
+- `browse.json` — `html` (full page source), `resources` (request URLs seen during the visit), `screenshot` (base64 PNG)
+
+### Documentation
+
+Module and function docstrings in `browser.py` and `constants.py` describe behavior, arguments, and failure handling (e.g. missing input file, per-URL errors logged without stopping other tasks).

@@ -1,0 +1,12 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "executionEnvironments": [
+    {
+      "root": "web_scraping",
+      "pythonVersion": "3.11",
+      "extraPaths": ["web_scraping/.venv/lib/python3.11/site-packages"]
+    }
+  ]
+}
