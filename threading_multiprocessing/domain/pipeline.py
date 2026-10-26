@@ -1,7 +1,6 @@
 """Plan Yahoo windows, fetch them concurrently, and write one CSV per ticker."""
 
 import logging
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -13,9 +12,6 @@ from domain.client import YahooFetchError, get_stock_history
 from domain.models import Stock, StockTicker, empty_ohlcv_frame
 
 logger = logging.getLogger(__name__)
-
-FetchHistory = Callable[[StockTicker, datetime, datetime], pd.DataFrame]
-"""Downloads OHLCV bars for ``(ticker, start, end)``."""
 
 
 def plan_windows(
@@ -59,7 +55,6 @@ def run_pipeline(
     output_dir: Path,
     *,
     max_workers: int,
-    fetch: FetchHistory = get_stock_history,
 ) -> list[Stock]:
     """Fetch hourly bars for each stock and write ``{ticker}.csv`` under ``output_dir``.
 
@@ -67,7 +62,6 @@ def run_pipeline(
         stocks: Tickers and hours to cover. Existing ``Stock.data`` is replaced.
         output_dir: Created if missing.
         max_workers: Concurrent Yahoo downloads.
-        fetch: History downloader; defaults to ``get_stock_history``.
 
     Returns:
         Stocks in the same order, each with the merged OHLCV frame.
@@ -84,7 +78,7 @@ def run_pipeline(
     logger.info("Fetching %d window(s) on up to %d thread(s)", len(jobs), max_workers)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        results = list(executor.map(lambda job: (job[0], fetch(*job)), jobs))
+        results = list(executor.map(lambda job: (job[0], get_stock_history(*job)), jobs))
 
     frames: dict[StockTicker, list[pd.DataFrame]] = {stock.ticker: [] for stock in stocks}
     for ticker, frame in results:

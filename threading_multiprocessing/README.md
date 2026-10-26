@@ -30,8 +30,6 @@ Hours default to `data/raw/{BTC-USD,GOOGL,AMZN}.txt`. Override with `BITCOIN_DAT
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python main.py
-pytest
-pytest -m integration
 ```
 
 ## Good Luck! (:
