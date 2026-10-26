@@ -1,4 +1,4 @@
-"""Read the requested-hours files into Stock objects."""
+"""Read requested-hours files into ``Stock`` objects."""
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -17,9 +17,25 @@ def load_stocks(
     hours_dir: Path | None = None,
     hours_files: Mapping[StockTicker, Path] | None = None,
 ) -> list[Stock]:
-    """One timestamp per line; blank or unparsable lines are skipped.
+    """Load requested hours for one or more tickers.
 
-    ``config`` supplies ``hours_dir`` and any ``*_dates`` overrides.
+    One timestamp per line; blank and unparsable lines are skipped.
+
+    File resolution order per ticker: ``hours_files``, then a ``Config``
+    ``*_dates`` override, then ``{hours_dir}/{ticker.value}.txt``.
+    ``hours_dir`` falls back to ``config.hours_dir`` or ``RAW_DATA_DIR``.
+
+    Args:
+        tickers: Symbols to load. Defaults to every ``StockTicker``.
+        config: Optional ``hours_dir`` and per-ticker date-file overrides.
+        hours_dir: Directory of default ``{ticker}.txt`` files.
+        hours_files: Explicit path overrides keyed by ticker.
+
+    Returns:
+        A ``Stock`` per ticker with sorted hours and an empty OHLCV frame.
+
+    Raises:
+        OSError: If a resolved hours file cannot be read.
     """
     tickers = tuple(tickers)
     hours_dir = hours_dir or (config.hours_dir if config else RAW_DATA_DIR)

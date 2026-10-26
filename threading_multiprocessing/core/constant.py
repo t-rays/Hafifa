@@ -1,3 +1,5 @@
+"""Shared paths, logging defaults, and Yahoo fetch parameters."""
+
 from datetime import timedelta
 from pathlib import Path
 
@@ -15,7 +17,7 @@ DEFAULT_MAX_WORKERS = 8
 
 OHLCV_COLUMNS = ("Open", "High", "Low", "Close", "Volume")
 
-# Yahoo range padding around each batch of requested hours.
+# Extra range around each batch so Yahoo has bars before/after the request.
 FETCH_PADDING = timedelta(days=2)
 # How many requested hours to group into one fetch window.
 FETCH_BATCH_SIZE = 100

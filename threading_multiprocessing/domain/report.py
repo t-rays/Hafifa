@@ -1,4 +1,4 @@
-"""Build the exercise destination CSV: hour, stock type, percentage change."""
+"""Build the destination CSV: hour, stock type, and percentage change."""
 
 from collections.abc import Sequence
 from pathlib import Path
@@ -11,7 +11,11 @@ COLUMNS = ("hour", "stock type", "percentage change")
 
 
 def build_changes_table(stocks: Sequence[Stock]) -> pd.DataFrame:
-    """One row per requested hour where an hourly bar and prior close exist."""
+    """One row per requested hour that has a computable percent change.
+
+    Rows are sorted by hour, then stock type. Hours without a matching bar
+    or a previous close are omitted.
+    """
     rows: list[dict[str, object]] = []
     for stock in stocks:
         for requested_hour in stock.hours:
@@ -32,6 +36,10 @@ def build_changes_table(stocks: Sequence[Stock]) -> pd.DataFrame:
 
 
 def write_destination_csv(stocks: Sequence[Stock], path: Path) -> pd.DataFrame:
+    """Write the destination report to ``path`` and return the table.
+
+    Creates parent directories if needed.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     table = build_changes_table(stocks)
     table.to_csv(path, index=False)
@@ -41,7 +49,15 @@ def write_destination_csv(stocks: Sequence[Stock], path: Path) -> pd.DataFrame:
 def hourly_percentage_change(
     bars: pd.DataFrame, requested_hour: pd.Timestamp
 ) -> float | None:
-    """Percent change from the previous hourly close to the close at the matched bar."""
+    """Percent change from the previous hourly close to the matched bar.
+
+    Matches the first bar at or after the requested hour, floored to the hour.
+
+    Returns:
+        ``(current - previous) / previous * 100``, or ``None`` if the frame
+        is empty, no bar matches, the match is the first row, or the previous
+        close is zero.
+    """
     if bars.empty:
         return None
     bar_time = _bar_for_requested_hour(pd.DatetimeIndex(bars.index), requested_hour)
@@ -60,7 +76,7 @@ def hourly_percentage_change(
 def _bar_for_requested_hour(
     bar_times: pd.DatetimeIndex, requested_hour: pd.Timestamp
 ) -> pd.Timestamp | None:
-    """Use the first hourly bar at or after the requested timestamp, floored to the hour."""
+    """First bar at or after the requested timestamp, floored to the hour."""
     position = bar_times.searchsorted(requested_hour.floor("h").to_datetime64(), side="left")
     if position >= len(bar_times):
         return None
@@ -69,5 +85,5 @@ def _bar_for_requested_hour(
 
 
 def format_requested_hour(timestamp: pd.Timestamp) -> str:
-    """Match the timestamp strings in the raw hours files (microseconds, no timezone)."""
+    """Format like the raw hours files: microseconds, no timezone."""
     return f"{timestamp.strftime('%Y-%m-%d %H:%M:%S')}.{timestamp.microsecond:06d}"

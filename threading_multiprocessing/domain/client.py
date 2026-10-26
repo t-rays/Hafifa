@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class YahooFetchError(RuntimeError):
-    """Yahoo download failed or returned no data for a window."""
+    """Yahoo download failed or returned no bars for a window."""
 
 
 def get_stock_history(
@@ -21,7 +21,14 @@ def get_stock_history(
     end: datetime,
     interval: str = "1h",
 ) -> pd.DataFrame:
-    """Download OHLCV bars for one window; raises YahooFetchError on failure or empty data."""
+    """Download OHLCV bars for one ticker and date window.
+
+    Returns:
+        A normalized OHLCV frame indexed by naive UTC bar time.
+
+    Raises:
+        YahooFetchError: If the download fails or Yahoo returns no data.
+    """
     try:
         history = yf.download(
             ticker.value,

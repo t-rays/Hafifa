@@ -1,3 +1,9 @@
+"""Environment-driven settings for the stock-price pipeline.
+
+Values come from the process environment and, when present, the package ``.env``.
+Relative paths are resolved against the package root.
+"""
+
 from pathlib import Path
 from typing import Literal, Self
 
@@ -16,7 +22,17 @@ from core.constant import (
 
 
 class Config(BaseSettings):
-    """Environment / ``.env``: LOG_LEVEL, OUTPUT_DIR, MAX_WORKERS, DESTINATION_FILE, *_DATES."""
+    """Runtime settings loaded from ``LOG_LEVEL``, ``OUTPUT_DIR``, ``MAX_WORKERS``,
+    ``DESTINATION_FILE``, ``HOURS_DIR``, and ``*_DATES``.
+
+    Attributes:
+        destination_file: Report path. A bare filename is placed under
+            ``output_dir``.
+        max_workers: Concurrent Yahoo downloads; must be greater than zero.
+        bitcoin_dates: Optional override for the Bitcoin hours file.
+        google_dates: Optional override for the Google hours file.
+        amazon_dates: Optional override for the Amazon hours file.
+    """
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -48,6 +64,8 @@ class Config(BaseSettings):
 
     @model_validator(mode="after")
     def _resolve_destination_file(self) -> Self:
+        """Join a bare filename to ``output_dir``; resolve other relative paths
+        against the package root."""
         destination = self.destination_file
         if destination.is_absolute():
             return self

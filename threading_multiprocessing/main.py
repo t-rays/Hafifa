@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
+    """Run the full pipeline.
+
+    Raises:
+        SystemExit: On failure (status ``1``); the original exception is logged.
+    """
     config = Config()
     logging.basicConfig(
         level=config.log_level,

@@ -1,4 +1,4 @@
-"""Plan Yahoo windows, fetch them concurrently, merge bars, write one CSV per ticker."""
+"""Plan Yahoo windows, fetch them concurrently, and write one CSV per ticker."""
 
 import logging
 from collections.abc import Callable
@@ -15,11 +15,25 @@ from domain.models import Stock, StockTicker, empty_ohlcv_frame
 logger = logging.getLogger(__name__)
 
 FetchHistory = Callable[[StockTicker, datetime, datetime], pd.DataFrame]
+"""Downloads OHLCV bars for ``(ticker, start, end)``."""
 
 
 def plan_windows(
     hours: pd.DatetimeIndex, batch_size: int = FETCH_BATCH_SIZE
 ) -> list[tuple[datetime, datetime]]:
+    """Group requested hours into padded Yahoo download windows.
+
+    Timestamps are floored to the hour, de-duplicated, and sorted, then packed
+    into batches of ``batch_size``. Each batch is expanded by ``FETCH_PADDING``
+    on both ends.
+
+    Args:
+        hours: Requested timestamps; may be empty, unsorted, or sub-hourly.
+        batch_size: Max distinct hours per window. Defaults to ``FETCH_BATCH_SIZE``.
+
+    Returns:
+        Inclusive ``(start, end)`` pairs, or an empty list when ``hours`` is empty.
+    """
     stamps = list(hours.floor("h").drop_duplicates().sort_values())
     windows: list[tuple[datetime, datetime]] = []
     for start in range(0, len(stamps), batch_size):
@@ -29,6 +43,10 @@ def plan_windows(
 
 
 def merge_ohlcv(*frames: pd.DataFrame) -> pd.DataFrame:
+    """Concatenate OHLCV frames, keeping the last bar at each duplicate timestamp.
+
+    Empty frames are ignored. Returns an empty OHLCV frame when nothing remains.
+    """
     parts = [frame for frame in frames if not frame.empty]
     if not parts:
         return empty_ohlcv_frame()
@@ -43,6 +61,20 @@ def run_pipeline(
     max_workers: int,
     fetch: FetchHistory = get_stock_history,
 ) -> list[Stock]:
+    """Fetch hourly bars for each stock and write ``{ticker}.csv`` under ``output_dir``.
+
+    Args:
+        stocks: Tickers and hours to cover. Existing ``Stock.data`` is replaced.
+        output_dir: Created if missing.
+        max_workers: Concurrent Yahoo downloads.
+        fetch: History downloader; defaults to ``get_stock_history``.
+
+    Returns:
+        Stocks in the same order, each with the merged OHLCV frame.
+
+    Raises:
+        YahooFetchError: If a stock requested hours and the merge is empty.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     jobs = [
         (stock.ticker, start, end)
