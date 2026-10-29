@@ -62,7 +62,7 @@ def run_pipeline(config: Config) -> None:
     futures = run_in_parallel(fetch_jobs, config.max_workers)
     results = []
     failures: list[tuple[str, Exception]] = []
-    for stock, future in zip(stocks, futures, strict=True):
+    for stock, future in zip(stocks, futures):
         try:
             results.append(future.result())
         except Exception as exc:
@@ -73,7 +73,7 @@ def run_pipeline(config: Config) -> None:
         summary = "; ".join(f"{ticker}: {exc}" for ticker, exc in failures)
         raise PipelineError(summary)
 
-    for stock, data in zip(stocks, results, strict=True):
+    for stock, data in zip(stocks, results):
         stock.add_data(data)
         matched = len(stock.get_required_data())
         logger.info(
