@@ -83,6 +83,11 @@ def run_pipeline(config: Config) -> None:
             matched,
         )
     logger.info("Building report for %d tickers", len(stocks))
-    report = build_report(stocks)
-    write_report(config.destination_file_path, report)
+    try:
+        report = build_report(stocks)
+        write_report(config.destination_file_path, report)
+    except Exception as exc:
+        logger.error("Report failed: %s", exc)
+        raise PipelineError(f"Report failed: {exc}")
+        
     logger.info("Pipeline completed successfully")

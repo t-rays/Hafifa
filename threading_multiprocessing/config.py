@@ -11,8 +11,10 @@ from constants import (
     DEFAULT_TICKERS,
     ENV_DESTINATION_FILE_PATH,
     ENV_MAX_WORKERS,
+    MIN_WORKERS,
     TIMESTAMP_FILE_SUFFIX,
 )
+from errors import ConfigError
 
 logger = getLogger(__name__)
 
@@ -39,7 +41,17 @@ class Config:
             ticker: f"{ticker.value}{TIMESTAMP_FILE_SUFFIX}" for ticker in stock_tickers
         }
         destination_file_path = os.getenv(ENV_DESTINATION_FILE_PATH, DEFAULT_DESTINATION_FILE_PATH)
-        max_workers = int(os.getenv(ENV_MAX_WORKERS, str(DEFAULT_MAX_WORKERS)))
+        max_workers_raw = os.getenv(ENV_MAX_WORKERS, str(DEFAULT_MAX_WORKERS))
+        try:
+            max_workers = int(max_workers_raw)
+        except ValueError as exc:
+            raise ConfigError(
+                f"{ENV_MAX_WORKERS} must be an integer, got {max_workers_raw!r}"
+            ) from exc
+        if max_workers < MIN_WORKERS:
+            raise ConfigError(
+                f"{ENV_MAX_WORKERS} must be at least {MIN_WORKERS}, got {max_workers}"
+            )
         config = cls(
             stock_tickers=stock_tickers,
             timestamps_file_path_dict=timestamps_file_path_dict,
