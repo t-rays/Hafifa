@@ -30,12 +30,32 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 
 Fetches minute OHLCV bars for BTC, GOOGL, and AMZN, keeps the minutes listed in each ticker’s timestamp file, and writes one CSV.
 
-## Run
+## Setup
 
-From this directory:
+Dependencies live in `pyproject.toml` (`yfinance`, `pandas`, `python-dotenv`). From this directory:
+
+**Recommended ([uv](https://docs.astral.sh/uv/)):**
 
 ```bash
-pip install yfinance pandas python-dotenv
+uv sync
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+```
+
+`uv sync` creates `.venv` if needed and installs dependencies from `pyproject.toml`.
+
+**Without uv:**
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install "yfinance>=0.2,<1" "pandas>=2.0,<3" "python-dotenv>=1.0,<2"
+```
+
+## Run
+
+With the virtual environment active:
+
+```bash
 python main.py
 ```
 
