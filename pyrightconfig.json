@@ -1,0 +1,16 @@
+{
+  "executionEnvironments": [
+    {
+      "root": "threading_multiprocessing",
+      "extraPaths": [
+        "threading_multiprocessing/.venv/lib/python3.12/site-packages"
+      ]
+    },
+    {
+      "root": "mongodb",
+      "extraPaths": [
+        "mongodb/.venv/lib/python3.12/site-packages"
+      ]
+    }
+  ]
+}
